@@ -6,6 +6,7 @@
 package com.liferay.site.cms.site.initializer.internal.struts;
 
 import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition;
+import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinitionSetting;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectRelationship;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectDefinitionResource;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectRelationshipResource;
@@ -43,6 +44,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import org.osgi.service.component.annotations.Component;
@@ -206,13 +208,59 @@ public class UpdateStructureStrutsAction implements StrutsAction {
 		return objectRelationships;
 	}
 
-	private void _updateObjectRelationships(
-			ObjectDefinition objectDefinition, long objectDefinitionId,
-			ObjectDefinitionResource objectDefinitionResource)
-		throws Exception {
+	private void _mergeObjectDefinitionSettings(
+		ObjectDefinition existingObjectDefinition,
+		ObjectDefinition objectDefinition) {
 
-		ObjectDefinition existingObjectDefinition =
-			objectDefinitionResource.getObjectDefinition(objectDefinitionId);
+		Map<String, ObjectDefinitionSetting> objectDefinitionSettingsMap =
+			new LinkedHashMap<>();
+
+		ObjectDefinitionSetting[] existingObjectDefinitionSettings =
+			existingObjectDefinition.getObjectDefinitionSettings();
+
+		if (existingObjectDefinitionSettings != null) {
+			for (ObjectDefinitionSetting objectDefinitionSetting :
+					existingObjectDefinitionSettings) {
+
+				String name = objectDefinitionSetting.getName();
+
+				if (!Objects.equals(name, "acceptAllGroups") &&
+					!Objects.equals(
+						name, "acceptedGroupExternalReferenceCodes") &&
+					!Objects.equals(name, "allowStandaloneObjectEntry")) {
+
+					objectDefinitionSettingsMap.put(
+						name, objectDefinitionSetting);
+				}
+			}
+		}
+
+		ObjectDefinitionSetting[] objectDefinitionSettings =
+			objectDefinition.getObjectDefinitionSettings();
+
+		if (objectDefinitionSettings != null) {
+			for (ObjectDefinitionSetting objectDefinitionSetting :
+					objectDefinitionSettings) {
+
+				objectDefinitionSettingsMap.put(
+					objectDefinitionSetting.getName(), objectDefinitionSetting);
+			}
+		}
+
+		Collection<ObjectDefinitionSetting> objectDefinitionSettingsCollection =
+			objectDefinitionSettingsMap.values();
+
+		objectDefinition.setObjectDefinitionSettings(
+			() -> objectDefinitionSettingsCollection.toArray(
+				new ObjectDefinitionSetting[0]));
+
+		objectDefinition.setTitleObjectFieldName(
+			existingObjectDefinition::getTitleObjectFieldName);
+	}
+
+	private void _mergeObjectRelationships(
+		ObjectDefinition existingObjectDefinition,
+		ObjectDefinition objectDefinition) {
 
 		ObjectRelationship[] existingObjectRelationships =
 			existingObjectDefinition.getObjectRelationships();
@@ -400,9 +448,14 @@ public class UpdateStructureStrutsAction implements StrutsAction {
 				}
 			}
 
-			_updateObjectRelationships(
-				_objectDefinition, _objectDefinitionId,
-				objectDefinitionResource);
+			ObjectDefinition existingObjectDefinition =
+				objectDefinitionResource.getObjectDefinition(
+					_objectDefinitionId);
+
+			_mergeObjectDefinitionSettings(
+				existingObjectDefinition, _objectDefinition);
+			_mergeObjectRelationships(
+				existingObjectDefinition, _objectDefinition);
 
 			objectDefinitionResource.putObjectDefinition(
 				_objectDefinitionId, _objectDefinition);
