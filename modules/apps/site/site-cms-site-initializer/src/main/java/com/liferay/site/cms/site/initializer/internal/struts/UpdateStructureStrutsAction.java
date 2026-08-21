@@ -67,12 +67,12 @@ public class UpdateStructureStrutsAction implements StrutsAction {
 		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		try {
+			String[] deletedGroupERCs = ParamUtil.getStringValues(
+				httpServletRequest, "deletedGroupERCs");
 			JSONArray deletedObjectRelationshipsJSONArray =
 				_jsonFactory.createJSONArray(
 					ParamUtil.getString(
 						httpServletRequest, "deletedObjectRelationships"));
-			String[] deletedRepeatableGroupsERCs = ParamUtil.getStringValues(
-				httpServletRequest, "deletedRepeatableGroupsERCs");
 			String objectDefinitionJSON = ParamUtil.getString(
 				httpServletRequest, "objectDefinition");
 			JSONArray objectRelationshipsJSONArray =
@@ -86,9 +86,9 @@ public class UpdateStructureStrutsAction implements StrutsAction {
 						"repeatableGroupObjectDefinitions"));
 
 			_updateStructure(
-				deletedObjectRelationshipsJSONArray,
-				deletedRepeatableGroupsERCs, httpServletRequest,
-				objectDefinitionJSON, objectRelationshipsJSONArray,
+				deletedGroupERCs, deletedObjectRelationshipsJSONArray,
+				httpServletRequest, objectDefinitionJSON,
+				objectRelationshipsJSONArray,
 				repeatableGroupObjectDefinitionsJSONArray);
 		}
 		catch (Exception exception) {
@@ -299,8 +299,8 @@ public class UpdateStructureStrutsAction implements StrutsAction {
 	}
 
 	private void _updateStructure(
+			String[] deletedGroupERCs,
 			JSONArray deletedObjectRelationshipsJSONArray,
-			String[] deletedRepeatableGroupsERCs,
 			HttpServletRequest httpServletRequest, String objectDefinitionJSON,
 			JSONArray objectRelationshipsJSONArray,
 			JSONArray repeatableGroupObjectDefinitionsJSONArray)
@@ -314,8 +314,8 @@ public class UpdateStructureStrutsAction implements StrutsAction {
 			objectDefinitionJSON);
 
 		Callable<Void> callable = new UpdateStructureCallable(
-			themeDisplay.getCompanyId(), deletedObjectRelationshipsJSONArray,
-			deletedRepeatableGroupsERCs,
+			themeDisplay.getCompanyId(), deletedGroupERCs,
+			deletedObjectRelationshipsJSONArray,
 			ObjectDefinition.toDTO(objectDefinitionJSON),
 			objectDefinitionJSONObject.getLong("id"),
 			_getObjectRelationships(objectRelationshipsJSONArray),
@@ -418,12 +418,16 @@ public class UpdateStructureStrutsAction implements StrutsAction {
 				}
 			}
 
-			if (ArrayUtil.isNotEmpty(_deletedRepeatableGroupsERCs)) {
-				for (String repeatableGroupERC : _deletedRepeatableGroupsERCs) {
+			if (ArrayUtil.isNotEmpty(_deletedGroupERCs)) {
+				for (String groupERC : _deletedGroupERCs) {
 					com.liferay.object.model.ObjectDefinition objectDefinition =
 						_objectDefinitionLocalService.
-							getObjectDefinitionByExternalReferenceCode(
-								repeatableGroupERC, _companyId);
+							fetchObjectDefinitionByExternalReferenceCode(
+								groupERC, _companyId);
+
+					if (objectDefinition == null) {
+						continue;
+					}
 
 					_objectDefinitionService.deleteObjectDefinition(
 						objectDefinition.getObjectDefinitionId());
@@ -482,17 +486,17 @@ public class UpdateStructureStrutsAction implements StrutsAction {
 		}
 
 		private UpdateStructureCallable(
-			long companyId, JSONArray deletedObjectRelationshipsJSONArray,
-			String[] deletedRepeatableGroupsERCs,
+			long companyId, String[] deletedGroupERCs,
+			JSONArray deletedObjectRelationshipsJSONArray,
 			ObjectDefinition objectDefinition, long objectDefinitionId,
 			List<ObjectRelationship> objectRelationships,
 			List<ObjectDefinition> repeatableGroupObjectDefinitions,
 			User user) {
 
 			_companyId = companyId;
+			_deletedGroupERCs = deletedGroupERCs;
 			_deletedObjectRelationshipsJSONArray =
 				deletedObjectRelationshipsJSONArray;
-			_deletedRepeatableGroupsERCs = deletedRepeatableGroupsERCs;
 			_objectDefinition = objectDefinition;
 			_objectDefinitionId = objectDefinitionId;
 			_objectRelationships = objectRelationships;
@@ -502,8 +506,8 @@ public class UpdateStructureStrutsAction implements StrutsAction {
 		}
 
 		private final long _companyId;
+		private final String[] _deletedGroupERCs;
 		private final JSONArray _deletedObjectRelationshipsJSONArray;
-		private final String[] _deletedRepeatableGroupsERCs;
 		private final ObjectDefinition _objectDefinition;
 		private final long _objectDefinitionId;
 		private final List<ObjectRelationship> _objectRelationships;

@@ -125,7 +125,7 @@ public class StructureBuilderDisplayContext {
 					_themeDisplay.getPortalURL(), _themeDisplay.getPathMain(),
 					"/cms/edit_structure_display_page")
 			).put(
-				"isGroupsEnabled",
+				"isNonRepeatableGroupsEnabled",
 				FeatureFlagManagerUtil.isEnabled(
 					_themeDisplay.getCompanyId(), "LPD-96666")
 			).put(

@@ -2360,10 +2360,9 @@ public class ActionUtil {
 
 	private static final Log _log = LogFactoryUtil.getLog(ActionUtil.class);
 
-	private static final Object _compareContentLayoutLock = new Object();
-
 	private static final ServiceTrackerList<CMSObjectEntryFormContributor>
 		_cmsObjectEntryFormContributors;
+	private static final Object _compareContentLayoutLock = new Object();
 
 	static {
 		Bundle bundle = FrameworkUtil.getBundle(ActionUtil.class);
