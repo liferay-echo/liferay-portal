@@ -1024,15 +1024,28 @@ public class FragmentEntryLinkLocalServiceTest {
 			int position, String rendererKey)
 		throws PortalException {
 
+		return _addFragmentEntryLink(
+			_group, fragmentEntry, externalReferenceCode,
+			defaultSegmentsExperienceId, plid, editableValues, position,
+			rendererKey, _serviceContext);
+	}
+
+	private FragmentEntryLink _addFragmentEntryLink(
+			Group group, FragmentEntry fragmentEntry,
+			String externalReferenceCode, long defaultSegmentsExperienceId,
+			long plid, String editableValues, int position, String rendererKey,
+			ServiceContext serviceContext)
+		throws PortalException {
+
 		return _fragmentEntryLinkLocalService.addFragmentEntryLink(
 			externalReferenceCode, TestPropsValues.getUserId(),
-			_group.getGroupId(), null, fragmentEntry.getExternalReferenceCode(),
+			group.getGroupId(), null, fragmentEntry.getExternalReferenceCode(),
 			ScopeUtil.getItemScopeExternalReferenceCode(
-				fragmentEntry.getGroupId(), _group.getGroupId()),
+				fragmentEntry.getGroupId(), group.getGroupId()),
 			defaultSegmentsExperienceId, plid, fragmentEntry.getCss(),
 			fragmentEntry.getHtml(), fragmentEntry.getJs(),
 			fragmentEntry.getConfiguration(), editableValues, StringPool.BLANK,
-			position, rendererKey, fragmentEntry.getType(), _serviceContext);
+			position, rendererKey, fragmentEntry.getType(), serviceContext);
 	}
 
 	private FragmentEntryLink _addFragmentEntryLinkFromGlobalToLayout()
