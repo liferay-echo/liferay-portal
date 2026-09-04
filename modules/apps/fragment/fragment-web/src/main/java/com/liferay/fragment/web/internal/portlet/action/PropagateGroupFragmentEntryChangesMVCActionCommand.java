@@ -17,6 +17,7 @@ import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseTransactionalMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.servlet.SessionErrors;
@@ -57,15 +58,15 @@ public class PropagateGroupFragmentEntryChangesMVCActionCommand
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		Set<Long> propagationTargetGroupIds;
-
+		String fragmentEntryERC = ParamUtil.getString(
+			actionRequest, "fragmentEntryERC");
 		long fragmentEntryGroupId = ParamUtil.getLong(
 			actionRequest, "fragmentEntryGroupId");
 		long[] groupIds = ParamUtil.getLongValues(actionRequest, "rowIds");
 
 		try {
-			propagationTargetGroupIds = _getPropagationTargetGroupIds(
-				fragmentEntryGroupId, groupIds);
+			_propagateFragmentEntryLinkChanges(
+				fragmentEntryERC, fragmentEntryGroupId, groupIds, themeDisplay);
 		}
 		catch (InvalidPropagationTargetGroupException
 					invalidPropagationTargetGroupException) {
@@ -83,10 +84,47 @@ public class PropagateGroupFragmentEntryChangesMVCActionCommand
 			return;
 		}
 
-		String fragmentEntryERC = ParamUtil.getString(
-			actionRequest, "fragmentEntryERC");
+		String redirect = ParamUtil.getString(actionRequest, "redirect");
 
-		for (long groupId : propagationTargetGroupIds) {
+		sendRedirect(actionRequest, actionResponse, redirect);
+	}
+
+	private Set<Long> _getPropagationTargetGroupIds(
+			long fragmentEntryGroupId, long[] groupIds)
+		throws InvalidPropagationTargetGroupException {
+
+		DepotEntry depotEntry = _depotEntryLocalService.fetchGroupDepotEntry(
+			fragmentEntryGroupId);
+
+		if (depotEntry == null) {
+			return SetUtil.fromArray(groupIds);
+		}
+
+		long[] connectedGroupIds = TransformUtil.transformToLongArray(
+			_depotEntryGroupRelLocalService.getDepotEntryGroupRels(depotEntry),
+			DepotEntryGroupRel::getToGroupId);
+
+		Set<Long> propagationTargetGroupIds = SetUtil.intersect(
+			groupIds,
+			ArrayUtil.append(connectedGroupIds, fragmentEntryGroupId));
+
+		if (ArrayUtil.isNotEmpty(groupIds) &&
+			propagationTargetGroupIds.isEmpty()) {
+
+			throw new InvalidPropagationTargetGroupException();
+		}
+
+		return propagationTargetGroupIds;
+	}
+
+	private void _propagateFragmentEntryLinkChanges(
+			String fragmentEntryERC, long fragmentEntryGroupId, long[] groupIds,
+			ThemeDisplay themeDisplay)
+		throws PortalException {
+
+		for (long groupId :
+				_getPropagationTargetGroupIds(fragmentEntryGroupId, groupIds)) {
+
 			String fragmentEntryScopeERC =
 				ScopeUtil.getItemScopeExternalReferenceCode(
 					fragmentEntryGroupId, groupId);
@@ -124,38 +162,6 @@ public class PropagateGroupFragmentEntryChangesMVCActionCommand
 
 			actionableDynamicQuery.performActions();
 		}
-
-		String redirect = ParamUtil.getString(actionRequest, "redirect");
-
-		sendRedirect(actionRequest, actionResponse, redirect);
-	}
-
-	private Set<Long> _getPropagationTargetGroupIds(
-			long fragmentEntryGroupId, long[] groupIds)
-		throws InvalidPropagationTargetGroupException {
-
-		DepotEntry depotEntry = _depotEntryLocalService.fetchGroupDepotEntry(
-			fragmentEntryGroupId);
-
-		if (depotEntry == null) {
-			return SetUtil.fromArray(groupIds);
-		}
-
-		long[] connectedGroupIds = TransformUtil.transformToLongArray(
-			_depotEntryGroupRelLocalService.getDepotEntryGroupRels(depotEntry),
-			DepotEntryGroupRel::getToGroupId);
-
-		Set<Long> propagationTargetGroupIds = SetUtil.intersect(
-			groupIds,
-			ArrayUtil.append(connectedGroupIds, fragmentEntryGroupId));
-
-		if (ArrayUtil.isNotEmpty(groupIds) &&
-			propagationTargetGroupIds.isEmpty()) {
-
-			throw new InvalidPropagationTargetGroupException();
-		}
-
-		return propagationTargetGroupIds;
 	}
 
 	@Reference
