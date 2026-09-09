@@ -26,9 +26,7 @@ export default function applyObjectLayout({
 	objectDefinition: ObjectDefinition;
 	parent: Uuid;
 }): Structure['children'] {
-	const objectLayout = objectDefinition.objectLayouts?.find(
-		(objectLayout) => objectLayout.defaultObjectLayout
-	);
+	const [objectLayout] = objectDefinition.objectLayouts ?? [];
 
 	if (!objectLayout) {
 		return children;

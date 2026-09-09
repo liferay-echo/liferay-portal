@@ -43,7 +43,7 @@ export default function buildObjectLayout(
 	}
 
 	return {
-		defaultObjectLayout: true,
+		defaultObjectLayout: false,
 		name: structure.label,
 		objectDefinitionExternalReferenceCode: structure.erc,
 		objectLayoutTabs: objectLayoutTabs.map((objectLayoutTab, priority) => ({

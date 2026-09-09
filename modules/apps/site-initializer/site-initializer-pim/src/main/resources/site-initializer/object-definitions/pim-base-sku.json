@@ -206,7 +206,7 @@
 	"objectFolderExternalReferenceCode": "L_PIM_PRODUCT_TYPES",
 	"objectLayouts": [
 		{
-			"defaultObjectLayout": true,
+			"defaultObjectLayout": false,
 			"name": {
 				"en_US": "PIM Base SKU"
 			},

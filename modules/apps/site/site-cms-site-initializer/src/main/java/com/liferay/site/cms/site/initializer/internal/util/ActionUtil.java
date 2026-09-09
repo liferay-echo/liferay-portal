@@ -2232,8 +2232,15 @@ public class ActionUtil {
 			return null;
 		}
 
-		return ObjectLayoutLocalServiceUtil.fetchDefaultObjectLayout(
-			objectDefinition.getObjectDefinitionId());
+		List<ObjectLayout> objectLayouts =
+			ObjectLayoutLocalServiceUtil.getObjectLayouts(
+				objectDefinition.getObjectDefinitionId());
+
+		if (objectLayouts.isEmpty()) {
+			return null;
+		}
+
+		return objectLayouts.get(0);
 	}
 
 	private static InfoForm _getInfoForm(
