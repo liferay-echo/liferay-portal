@@ -2,7 +2,7 @@
 
 exports[`buildObjectLayout gathers loose items into an implicit first general tab and serializes a root group as a tab 1`] = `
 Object {
-  "defaultObjectLayout": true,
+  "defaultObjectLayout": false,
   "name": Object {
     "en_US": "Product",
   },
@@ -64,7 +64,7 @@ Object {
 
 exports[`buildObjectLayout serializes a nested group as a collapsable box inside its tab 1`] = `
 Object {
-  "defaultObjectLayout": true,
+  "defaultObjectLayout": false,
   "name": Object {
     "en_US": "Product",
   },
@@ -156,7 +156,7 @@ Object {
 
 exports[`buildObjectLayout serializes a repeatable group as a repeatable-group marker box 1`] = `
 Object {
-  "defaultObjectLayout": true,
+  "defaultObjectLayout": false,
   "name": Object {
     "en_US": "Product",
   },
